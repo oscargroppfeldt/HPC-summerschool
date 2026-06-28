@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
 
     // Start timing
     t0 = omp_get_wtime();
-
+	#pragma omp parallel for collapse(2) schedule(dynamic, 32)
     for (int j = 0; j < height; ++j) {
         for (int i = 0; i < width; ++i) {
             double x = xmin + i * dx;

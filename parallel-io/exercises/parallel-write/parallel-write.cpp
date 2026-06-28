@@ -24,15 +24,39 @@ void single_writer(const std::vector<int>& localData, const char* filename) {
     // Gets called from all MPI ranks. 'localData' contains different data on each rank.
     // TODO: Gather contents of 'localData' to one MPI process and write it all to file 'filename' ("spokesperson" strategy).
     // The output should be ordered such that data from rank 0 comes first, then rank 1, and so on
-
-    // You can assume that 'localData' has same length in all MPI processes:
+	
     const size_t numElementsPerRank = localData.size();
-
+	int rank, size;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	std::vector<int> rbuf; 
+	if (0 == rank){
+		rbuf.resize(numElements);
+	}
+    // You can assume that 'localData' has same length in all MPI processes:
+	MPI_Gather(localData.data(), numElementsPerRank, MPI_INT, rbuf.data(), numElementsPerRank, MPI_INT, 0, MPI_COMM_WORLD);
+	
+	MPI_File mpi_fh;
+    MPI_Status fh_status;
+    MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &mpi_fh);
+	if (0 == rank){
+		MPI_File_write(mpi_fh, rbuf.data(), size * numElementsPerRank, MPI_INT, &fh_status);
+	}
+	MPI_File_close(&mpi_fh);
 }
 
 void collective_write(const std::vector<int>& localData, const char* filename) {
     // TODO: Like single_writer(), but implement a parallel write using MPI_File_write_at_all()
-
+	
+	int rank, size;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_File mpi_fh;
+	MPI_Status fh_status;
+	MPI_Offset offset = rank * localData.size() * sizeof(int);
+	MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &mpi_fh);
+	MPI_File_write_at_all(mpi_fh, offset, localData.data(), localData.size(), MPI_INT, &fh_status);
+	MPI_File_close(&mpi_fh);
 }
 
 int main(int argc, char **argv) {

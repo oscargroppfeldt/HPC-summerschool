@@ -10,13 +10,14 @@ int main(void)
     int var = 42;
 
     printf("Main thread: initial var = %d\n", var);
-    #pragma omp parallel
+    #pragma omp parallel default(none) 
     {
         printf("Thread  %3d: initial var = %d\n", omp_get_thread_num(), var);
         var = omp_get_thread_num();
         printf("Thread  %3d:   final var = %d\n", omp_get_thread_num(), var);
     }
-    printf("Main thread:   final var = %d\n", var);
+    
+	printf("Main thread:   final var = %d\n", var);
 
     return 0;
 }

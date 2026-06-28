@@ -8,6 +8,7 @@
 #include <iostream>
 #include <iomanip>
 #include <chrono>
+#include <omp.h>
 
 #include "heat.hpp"
 
@@ -15,21 +16,27 @@ int main(int argc, char **argv)
 {
 
     const int image_interval = 100;    // Image output interval
-
-    int nsteps;                 // Number of time steps
+    int num_threads = 1;
+	int nsteps;                 // Number of time steps
     Field current, previous;    // Current and previous temperature fields
     initialize(argc, argv, current, previous, nsteps);
 
     // Output the initial field
     write_field(current, 0);
-
+	#pragma omp parallel
+    #pragma omp single
+    {
+	#ifdef _OPENMP
+        num_threads = omp_get_num_threads();
+	#endif
+    }
     auto average_temp = average(current);
     std::cout << "Simulation parameters: "
               << "rows: " << current.nx << " columns: " << current.ny
               << " time steps: " << nsteps << std::endl;
     std::cout << std::fixed << std::setprecision(6);
     std::cout << "Average temperature at start: " << average_temp << std::endl;
-
+	std::cout << "Number of OpenMP threads: " << num_threads << std::endl;
 
     const double a = 0.5;     // Diffusion constant
     auto dx2 = current.dx * current.dx;

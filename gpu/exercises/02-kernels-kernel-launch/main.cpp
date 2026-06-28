@@ -24,8 +24,8 @@ int main(int argc, char **argv) {
 
     printf("Launching with %d blocks and %d threads\n", num_blocks, num_threads);
     hello<<<num_blocks, num_threads>>>(num_blocks, num_threads);
-    [[maybe_unused]] const auto result = hipDeviceSynchronize();
-
+	[[maybe_unused]] const auto result = hipDeviceSynchronize();
+		
     return 0;
 }
 

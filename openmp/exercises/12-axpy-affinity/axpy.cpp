@@ -7,7 +7,7 @@
 #include <vector>
 #include <omp.h>
 #include "helper_functions.hpp"
-
+#include <span>
 
 int main(int argc, char* argv[]) {
     // Array size
@@ -18,11 +18,13 @@ int main(int argc, char* argv[]) {
     printf("Array size n = %d\n", n);
 
     double alpha;
-    std::vector<double> x(n), y(n);
+	double *_x = (double*)malloc(n * sizeof(double));
+	std::span<double> (_x, n);
 
     // Initialization
     alpha = 3.0;
-    for (int i = 0; i < n; i++) {
+	#pragma omp parallel for
+	for (int i = 0; i < n; i++) {
         double frac = 1.0 / ((double) (n - 1));
         x[i] = i * frac;
         y[i] = i * frac * 100;
@@ -45,7 +47,7 @@ int main(int argc, char* argv[]) {
 
     // End timing
     double t1 = omp_get_wtime();
-
+	free(_x);
     // Print output values
     printf("Output:\n");
     print_array("y", y);

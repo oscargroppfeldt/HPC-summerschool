@@ -15,7 +15,7 @@ int main(int argc, char **argv)
 {
 
   // TODO start: initialize MPI
-
+	MPI_Init(&argc, &argv);
   // TODO end
 
     const int image_interval = 100;    // Image output interval
@@ -50,9 +50,12 @@ int main(int argc, char **argv)
     auto start_clock = MPI_Wtime();
 
     // Time evolve
+	MPI_Request reqs[4];
+	MPI_Status stats[4];
     for (int iter = 1; iter <= nsteps; iter++) {
-        exchange(previous, parallelization);
+        exchange(previous, parallelization, reqs);
         evolve(current, previous, a, dt);
+		MPI_Waitall(4, reqs, stats);
         if (iter % image_interval == 0) {
             write_field(current, iter, parallelization);
         }
@@ -80,7 +83,7 @@ int main(int argc, char **argv)
     write_field(previous, nsteps, parallelization);
 
   // TODO start: finalize MPI
-
+	MPI_Finalize();
   // TODO end
 
     return 0;

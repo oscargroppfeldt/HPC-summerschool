@@ -43,7 +43,7 @@ void compute_block(iter_t* iter_counts, index_t width,
                    index_t i0, index_t j0, index_t i1, index_t j1,
                    double xmin, double ymin,
                    double dx, double dy) {
-    for (index_t j = j0; j < j1; ++j) {
+	for (index_t j = j0; j < j1; ++j) {
         for (index_t i = i0; i < i1; ++i) {
             double x = xmin + i * dx;
             double y = ymin + j * dy;
@@ -78,10 +78,11 @@ int main(int argc, char* argv[]) {
 
     // Start timing
     t0 = omp_get_wtime();
-
-    for (int j = 0; j < height; j += BLOCK_SIZE) {
+    
+	#pragma omp parallel for collapse(2) schedule(dynamic, 128)
+	for (int j = 0; j < height; j += BLOCK_SIZE) {
         for (int i = 0; i < width; i += BLOCK_SIZE) {
-            compute_block(iter_counts.data(), width,
+			compute_block(iter_counts.data(), width,
                           i, j, i + BLOCK_SIZE, j + BLOCK_SIZE,
                           xmin, ymin, dx, dy);
         }

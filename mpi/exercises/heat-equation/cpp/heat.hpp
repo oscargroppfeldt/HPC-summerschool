@@ -15,19 +15,18 @@ struct ParallelData {
 
     ParallelData() {      // Constructor
 
-      // TODO start: query number of MPI tasks and store it in
-      // the size attribute of the class
+      MPI_Comm_size(MPI_COMM_WORLD, &size);
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-      // Query MPI rank of this task and store it in the rank attribute
-      // Determine also up and down neighbours of this domain and store
-      // them in nup and ndown attributes, remember to cope with
-      // boundary domains appropriatly
+      nup = rank - 1;
+      ndown = rank + 1;
 
-      nup =
-      ndown =
-
-      // TODO end
-
+      if (nup < 0) {
+        nup = MPI_PROC_NULL;
+      }
+      if (ndown > size - 1) {
+        ndown = MPI_PROC_NULL;
+      }
     };
 
 };
@@ -61,7 +60,7 @@ struct Field {
 void initialize(int argc, char *argv[], Field& current,
                 Field& previous, int& nsteps, ParallelData parallel);
 
-void exchange(Field& field, const ParallelData parallel);
+void exchange(Field& field, const ParallelData parallel, MPI_Request[4]);
 
 void evolve(Field& curr, const Field& prev, const double a, const double dt);
 

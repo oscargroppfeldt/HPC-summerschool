@@ -43,13 +43,23 @@ int main(int argc, char* argv[]) {
 
     /* Create the 2D Cartesian communicator */
     /* TODO */
-
+	MPI_Cart_create(MPI_COMM_WORLD, 2, dims, period, false, &comm2d);	
     /* Find out and store the neighboring ranks */
     /* TODO */
-
+	int n=0;
+	for(int dir=0; dir < 2; dir++){
+		for(int disp=-1; disp <=1; disp+=2){
+			int curr_rank;
+			int target_rank;
+			MPI_Cart_shift(comm2d, dir, disp, &curr_rank, &target_rank);
+			neighbors[n] = target_rank;
+			n++;
+		}
+	}
+	MPI_Comm_rank(comm2d, &crank);
     /* Find out and store also the Cartesian coordinates of a rank */
     /* TODO */
-
+	MPI_Cart_coords(comm2d, rank, 2, coords);	
     for (irank = 0; irank < ntasks; irank++) {
         if (crank == irank) {
             printf("%3i = %2i %2i neighbors=%3i %3i %3i %3i\n",
@@ -58,7 +68,7 @@ int main(int argc, char* argv[]) {
         }
         MPI_Barrier(comm2d);
     }
-
+	MPI_Comm_free(&comm2d);
     MPI_Finalize();
     return 0;
 }

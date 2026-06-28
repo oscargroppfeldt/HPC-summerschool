@@ -43,7 +43,8 @@ void compute_block(iter_t* iter_counts, index_t width,
                    index_t i0, index_t j0, index_t i1, index_t j1,
                    double xmin, double ymin,
                    double dx, double dy) {
-    for (index_t j = j0; j < j1; ++j) {
+	#pragma omp for collapse(2)
+	for (index_t j = j0; j < j1; ++j) {
         for (index_t i = i0; i < i1; ++i) {
             double x = xmin + i * dx;
             double y = ymin + j * dy;
@@ -104,18 +105,19 @@ void compute_adaptive(iter_t* iter_counts, index_t width,
     // Subdivide the block otherwise
     index_t im = (i0 + i1) / 2;
     index_t jm = (j0 + j1) / 2;
-    compute_adaptive(iter_counts, width,
+	#pragma omp task
+	compute_adaptive(iter_counts, width,
                      i0, j0, im, jm,
                      xmin, ymin, dx, dy);
-
+	#pragma omp task
     compute_adaptive(iter_counts, width,
                      im, j0, i1, jm,
                      xmin, ymin, dx, dy);
-
+	#pragma omp task
     compute_adaptive(iter_counts, width,
                      i0, jm, im, j1,
                      xmin, ymin, dx, dy);
-
+	#pragma omp task
     compute_adaptive(iter_counts, width,
                      im, jm, i1, j1,
                      xmin, ymin, dx, dy);
@@ -147,11 +149,12 @@ int main(int argc, char* argv[]) {
 
     // Start timing
     t0 = omp_get_wtime();
-
+	#pragma omp parallel
+	{
     compute_adaptive(iter_counts.data(), width,
                      0, 0, width, height,
                      xmin, ymin, dx, dy);
-
+	}
     // End timing
     t1 = omp_get_wtime();
 

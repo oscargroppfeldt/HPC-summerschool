@@ -8,14 +8,25 @@
 #include <iostream>
 #include <iomanip>
 #include <mpi.h>
-
+#include <omp.h>
 #include "heat.hpp"
 
 int main(int argc, char **argv)
 {
+	int provided, ntasks, nproc;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
+	if (provided > MPI_THREAD_FUNNELED){
+		printf("MPI thread support to bad\n");
+		MPI_Abort(MPI_COMM_WORLD, -1);
+		return -1;
+	}
 
-    MPI_Init(&argc, &argv);
-
+	#pragma omp parallel
+	#pragma omp single
+	{
+		ntasks = omp_get_num_threads();
+	}
+	printf("Number of OpenMP threads: %d\n", ntasks);
     const int image_interval = 100;    // Image output interval
 
     ParallelData parallelization; // Parallelization info

@@ -30,15 +30,46 @@ int main(int argc, char *argv[])
     /* Start timing */
     MPI_Barrier(MPI_COMM_WORLD);
     double t0 = MPI_Wtime();
-
+	
+	int tag = 0;
     /* Send everywhere */
     // TODO: Implement the broadcast of the array buf
-
+	/*
+	 * 2 i
+	if(0 == rank){
+		for(int dst{1}; dst < size; dst++){
+			MPI_Send(buf.data(), buf_size, MPI_INT, dst, tag, MPI_COMM_WORLD);
+		}
+	} else {
+		MPI_Status stat;
+		MPI_Recv(buf.data(), buf_size, MPI_INT, 0, tag, MPI_COMM_WORLD, &stat);
+	}
+	*/
     /* End timing */
-    double t1 = MPI_Wtime();
+	// 2 ii
+	//MPI_Bcast(buf.data(), buf_size, MPI_INT, rank, MPI_COMM_WORLD);
+    
+	/* 3 i
+	int block_size = buf_size / size;
+	int num_blocks = buf_size / block_size; // size
+	if (0 == rank){
+		for (int i{1}; i < num_blocks; i++){
+			MPI_Send(buf.data()+i*block_size, block_size, MPI_INT, i,tag, MPI_COMM_WORLD);
+		}
+	}
+	else {
+		MPI_Status stat;
+		MPI_Recv(buf.data(), block_size, MPI_INT, 0, tag, MPI_COMM_WORLD, &stat);
+	}
+	*/
+	// 3 ii
+	auto recv_buf = buf;
+	MPI_Scatter(buf.data(),	buf_size / size, MPI_INT, recv_buf.data(), buf_size / size, MPI_INT, 0, MPI_COMM_WORLD);
+
+	double t1 = MPI_Wtime();
 
     /* Print data that was received */
-    print_buffer(buf);
+    print_buffer(recv_buf);
     if (rank == 0) {
         printf("Time elapsed: %6.8f s\n", t1 - t0);
     }

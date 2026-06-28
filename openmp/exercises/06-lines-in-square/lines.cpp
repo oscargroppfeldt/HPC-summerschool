@@ -35,17 +35,22 @@ int main(int argc, char* argv[])
     double t0 = omp_get_wtime();
 
     // Create a random number generator
-    std::seed_seq seq{seed};
-    std::mt19937_64 rng(seq);
-    std::uniform_real_distribution<double> dis(0.0, 1.0);
 
     // Print a few random values for debugging
-    printf("Thread %3d: A few random values: %.4f %.4f %.4f\n",
-           0, dis(rng), dis(rng), dis(rng));
 
     // Draw N random lines and calculate total distance
     double total_distance = 0.0;
-    for (int i = 0; i < N; ++i) {
+
+	#pragma omp parallel reduction(+:total_distance)
+	{		
+    std::seed_seq seq{seed, omp_get_thread_num()};
+    std::mt19937_64 rng(seq);
+    std::uniform_real_distribution<double> dis(0.0, 1.0);
+
+    printf("Thread %3d: A few random values: %.4f %.4f %.4f\n",omp_get_thread_num(), dis(rng), dis(rng), dis(rng));
+
+	#pragma omp for	
+	for (int i = 0; i < N; ++i) {
         // Get two random points
         double x1 = dis(rng);
         double y1 = dis(rng);
@@ -59,8 +64,8 @@ int main(int argc, char* argv[])
 
         // Sum up distances
         total_distance += distance;
-    }
-
+    	}
+	}
     // Calculate average distance
     double average_distance = total_distance / static_cast<double>(N);
 

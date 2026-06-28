@@ -27,6 +27,7 @@ void Field::generate(ParallelData parallel) {
 
     // Radius of the source disc
     auto radius = nx_full / 6.0;
+	#pragma omp parallel for collapse(2)
     for (int i = 0; i < nx + 2; i++) {
         for (int j = 0; j < ny + 2; j++) {
             // Distance of point i, j from the origin

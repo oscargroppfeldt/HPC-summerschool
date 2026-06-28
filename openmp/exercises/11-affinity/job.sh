@@ -4,8 +4,8 @@
 #SBATCH --reservation=SummerSchoolCPU
 #SBATCH --partition=small
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=1
+#SBATCH --ntasks-per-node=2
+#SBATCH --cpus-per-task=4
 #SBATCH --mem-per-cpu=1G
 #SBATCH --time=00:05:00
 
@@ -14,8 +14,10 @@ export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK:-1}
 
 # Place and bind threads to single hardware threads
 # Comment the following lines if binding is not desired
-#export OMP_PLACES=cores
-#export OMP_PROC_BIND=spread
+export OMP_DISPLAY_AFFINITY=true
+export OMP_AFFINITY_FORMAT="Process %P level %L thread %0.4n/%0.4N on node %H core %A"
+export OMP_PLACES=cores
+export OMP_PROC_BIND=spread
 
 # Run the program
 srun ./hello.x

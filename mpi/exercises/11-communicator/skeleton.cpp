@@ -40,8 +40,11 @@ int main(int argc, char *argv[])
      *       use a single collective communication call
      *       (and maybe prepare some parameters for the call)
      */
-
-    /* Print data that was received */
+    color = rank / 2;
+	MPI_Comm comm_subset;
+	MPI_Comm_split(MPI_COMM_WORLD, color, rank % 2, &comm_subset);
+	MPI_Reduce(sendbuf.data(), recvbuf.data(), 2*NTASKS, MPI_INT, MPI_SUM,0, comm_subset);	
+	/* Print data that was received */
     print_buffers(recvbuf);
 
     MPI_Finalize();

@@ -52,24 +52,86 @@ void launch_kernel(const char *kernel_name, const char *file, int32_t line,
     const int max_threads_x = get_device_attribute(
         hipDeviceAttribute_t::hipDeviceAttributeMaxBlockDimX);
     if (threads.x <= 0 || max_threads_x < threads.x) {
-        // TODO
+		// TODO
         // The given threads.x is not within the correct limits.
         // Print error message and exit.
         // See above how it's done for the shared memory check.
-    }
+		std::fprintf(stderr, "x-dim thread count requested is too large: %ld > %d, for kernel " "\"%s\" in %s on line %d\n",threads.x, max_threads_x, kernel_name, file, line);
+        exit(EXIT_FAILURE);
+	}
     // TODO: Do the same for y and z dimensions.
 
-    // TODO: Do the same for all dimensions of grid size.
+    const int max_threads_y = get_device_attribute(
+        hipDeviceAttribute_t::hipDeviceAttributeMaxBlockDimY);
+    if (threads.y <= 0 || max_threads_y < threads.y) {
+		// TODO
+        // The given threads.x is not within the correct limits.
+        // Print error message and exit.
+        // See above how it's done for the shared memory check.
+		std::fprintf(stderr, "y-dim thread count requested is too large: %ld > %d, for kernel " "\"%s\" in %s on line %d\n",threads.y, max_threads_y, kernel_name, file, line);
+        exit(EXIT_FAILURE);
+	}
+    
+    const int max_threads_z = get_device_attribute(
+        hipDeviceAttribute_t::hipDeviceAttributeMaxBlockDimZ);
+    if (threads.z <= 0 || max_threads_z < threads.z) {
+		// TODO
+        // The given threads.x is not within the correct limits.
+        // Print error message and exit.
+        // See above how it's done for the shared memory check.
+		std::fprintf(stderr, "z-dim thread count requested is too large: %ld > %d, for kernel " "\"%s\" in %s on line %d\n",threads.z, max_threads_z, kernel_name, file, line);
+        exit(EXIT_FAILURE);
+	}
+	// TODO: Do the same for all dimensions of grid size.
     // Hint: hipDeviceAttribute_t::hipDeviceAttributeMaxGridDimX
     // Compare againts the input argument 'dim3 blocks'
     // Similarly to blocks, also the grid sizes must be greater than zero in all
     // dimensions
 
-    // TODO: Finally make sure the total number of threads per block is less
+    const int max_block_x = get_device_attribute(
+        hipDeviceAttribute_t::hipDeviceAttributeMaxGridDimX);
+    if (blocks.x <= 0 || max_block_x < blocks.x) {
+		// TODO
+        // The given threads.x is not within the correct limits.
+        // Print error message and exit.
+        // See above how it's done for the shared memory check.
+		std::fprintf(stderr, "x-dim block count requested is too large: %ld > %d, for kernel " "\"%s\" in %s on line %d\n", blocks.x, max_block_x, kernel_name, file, line);
+        exit(EXIT_FAILURE);
+	}
+    
+    const int max_block_y = get_device_attribute(
+        hipDeviceAttribute_t::hipDeviceAttributeMaxGridDimY);
+    if (blocks.y <= 0 || max_block_y < blocks.y) {
+		// TODO
+        // The given threads.x is not within the correct limits.
+        // Print error message and exit.
+        // See above how it's done for the shared memory check.
+		std::fprintf(stderr, "y-dim block count requested is too large: %ld > %d, for kernel " "\"%s\" in %s on line %d\n", blocks.y, max_block_y, kernel_name, file, line);
+        exit(EXIT_FAILURE);
+	}
+	
+    const int max_block_z = get_device_attribute(
+        hipDeviceAttribute_t::hipDeviceAttributeMaxGridDimZ);
+    if (blocks.z <= 0 || max_block_z < blocks.z) {
+		// TODO
+        // The given threads.x is not within the correct limits.
+        // Print error message and exit.
+        // See above how it's done for the shared memory check.
+		std::fprintf(stderr, "z-dim block count requested is too large: %ld > %d, for kernel " "\"%s\" in %s on line %d\n", blocks.z, max_block_z, kernel_name, file, line);
+        exit(EXIT_FAILURE);
+	}
+	// TODO: Finally make sure the total number of threads per block is less
     // than the maximum: i.e.
     // hipDeviceAttribute_t::hipDeviceAttributeMaxThreadsPerBlock >=
     // threads.x * threads.y * threads.z
-
+	const int max_threads_per_block = get_device_attribute(
+			hipDeviceAttribute_t::hipDeviceAttributeMaxThreadsPerBlock);
+	const int block_thread_count = threads.x * threads.y * threads.z;
+	if (block_thread_count <= 0 || block_thread_count > max_threads_per_block){		
+		
+		std::fprintf(stderr, "total thread count per block requested is too large: %ld > %d, for kernel " "\"%s\" in %s on line %d\n", block_thread_count, max_threads_per_block, kernel_name, file, line);
+        exit(EXIT_FAILURE);
+	}
     // Reset the error variable to success.
     result = hipGetLastError();
 
