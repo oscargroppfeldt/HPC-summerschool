@@ -85,8 +85,10 @@ int main() {
   b = (float*) malloc(N_bytes);
   c = (float*) malloc(N_bytes);
 
-  #error create three separate streams
-
+	hipStream_t s_a, s_b, s_c;
+	HIP_ERRCHK(hipStreamCreate(&s_a));
+	HIP_ERRCHK(hipStreamCreate(&s_b));
+	HIP_ERRCHK(hipStreamCreate(&s_c));
   // Device allocations
   HIP_ERRCHK(hipMalloc((void**)&d_a, N_bytes));
   HIP_ERRCHK(hipMalloc((void**)&d_b, N_bytes));
@@ -98,22 +100,21 @@ int main() {
   HIP_ERRCHK(hipDeviceSynchronize());
 
   // Execute kernels in sequence
-  #error Launch each kernel in a different stream
-  kernel_a<<<gridsize, blocksize,0,0>>>(d_a, N);
+  kernel_a<<<gridsize, blocksize,0,s_a>>>(d_a, N);
   HIP_ERRCHK(hipGetLastError());
 
-  kernel_b<<<gridsize, blocksize,0,0>>>(d_b, N);
+  kernel_b<<<gridsize, blocksize,0,s_b>>>(d_b, N);
   HIP_ERRCHK(hipGetLastError());
 
-  kernel_c<<<gridsize, blocksize,0,0>>>(d_c, N);
+  kernel_c<<<gridsize, blocksize,0,s_c>>>(d_c, N);
   HIP_ERRCHK(hipGetLastError());
 
   // Copy results back (in the default stream with hipMemCpy)
-  #error synchronize the host with stream A, before copying d_A back
-  HIP_ERRCHK(hipMemcpy(a, d_a, N_bytes, hipMemcpyDefault));
-  #error synchronize the host with stream B, before copying d_B back
+  HIP_ERRCHK(hipStreamSynchronize(s_a));
+  HIP_ERRCHK(hipMemcpy(a, d_a, N_bytes, hipMemcpyDefault));  
+  HIP_ERRCHK(hipStreamSynchronize(s_b));
   HIP_ERRCHK(hipMemcpy(b, d_b, N_bytes, hipMemcpyDefault));
-  #error synchronize the host with stream C, before copying d_C back
+  HIP_ERRCHK(hipStreamSynchronize(s_c));
   HIP_ERRCHK(hipMemcpy(c, d_c, N_bytes, hipMemcpyDefault));
 
   for (int i = 0; i < 10; ++i) printf("%f ", a[i]);
@@ -129,8 +130,10 @@ int main() {
   HIP_ERRCHK(hipFree(d_b));
   HIP_ERRCHK(hipFree(d_c));
 
-  #error destroy all streams
 
+  HIP_ERRCHK(hipStreamDestroy(s_a));
+  HIP_ERRCHK(hipStreamDestroy(s_b));
+  HIP_ERRCHK(hipStreamDestroy(s_c));
   free(a);
   free(b);
   free(c);

@@ -2,6 +2,8 @@
 //
 // SPDX-License-Identifier: MIT
 
+#pragma omp declare target
 double axpy(double alpha, double x, double y) {
     return alpha * x + y;
 }
+#pragma omp end declare target

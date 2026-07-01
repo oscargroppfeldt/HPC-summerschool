@@ -39,12 +39,15 @@ int main(int argc, char* argv[]) {
     printf("a = %8.4f\n", alpha);
     print_array("x", x);
     print_array("y", y);
-
+	
+	double *_alpha = &alpha;
     // Calculate axpy
     // TODO: This is broken. We need to map memory to/from GPU
     //       and pass the device pointers to this function call.
-    hipblasDaxpy(handle, n, &alpha, _x, 1, _y, 1);
-
+	#pragma omp target data use_device_ptr(_x, _y, _alpha)
+	{
+	hipblasDaxpy(handle, n, _alpha, _x, 1, _y, 1);
+	}
     // Print output values
     printf("Output:\n");
     print_array("y", y);

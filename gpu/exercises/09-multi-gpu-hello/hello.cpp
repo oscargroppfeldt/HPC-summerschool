@@ -25,10 +25,13 @@ int main(int argc, char* argv[]) {
   int node_rank;
   // TODO (part b) obtain node local rank by creating "SHARED" communicator 
   MPI_Comm node_comm;
-
+  MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &node_comm);
+  MPI_Comm_rank(node_comm, &node_rank);
   // TODO (part a) query number of devices to num_devices
+  hipGetDeviceCount(&num_devices);
   // TODO (part b) set different device for each local MPI rank
-
+  my_device = node_rank % num_devices;
+  hipSetDevice(my_device);
   if (0 == rank) {
     printf("Total number of MPI processes: %d\n", size);
     printf("Number of GPUs per node: %d\n", num_devices);

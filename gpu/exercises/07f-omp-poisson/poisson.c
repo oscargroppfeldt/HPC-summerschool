@@ -44,10 +44,11 @@ void run(const int n, const int niter, const double normmax)
 
     // Iterate
     double t0 = omp_get_wtime();
-
     for (int it = 1; it < niter + 1; it++) {
 
         // Stencil update
+		#pragma omp target map(tofrom: u) map(tofrom: unew)
+		#pragma omp teams distribute parallel for collapse(2)
         for (int i = 1; i < ny - 1; i++) {
             for (int j = 1; j < nx - 1; j++) {
                 int ind = i * nx + j;

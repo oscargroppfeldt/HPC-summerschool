@@ -21,7 +21,8 @@ int main(int argc, char* argv[])
 
     // Calculate sum
     double total = 0;
-    #pragma omp target teams distribute parallel for map(tofrom: total)
+    #pragma omp target map(tofrom: total)
+	#pragma omp teams distribute parallel for reduction(+:total)
     for (int i = 0; i < n; i++) {
         total += std::sin(static_cast<double>(i));
     }

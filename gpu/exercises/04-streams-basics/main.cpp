@@ -51,26 +51,21 @@ int main() {
   float *a;
   float *d_a;
 
-  #error declare a new stream variable with hipStream_t
-  #error create the HIP stream with hipStreamCreate
-
+	hipStream_t stream;
+	hipStreamCreate(&stream);
   a = (float*) malloc(N_bytes);
   HIP_ERRCHK(hipMalloc((void**)&d_a, N_bytes));
 
   memset(a, 0, N_bytes);
 
-  #error replace hipMemcpy with its Async counterpart, to copy data to the device using your stream
-  HIP_ERRCHK(hipMemcpy(d_a, a, N_bytes, hipMemcpyHostToDevice));
+  HIP_ERRCHK(hipMemcpyAsync(d_a, a, N_bytes, hipMemcpyHostToDevice, stream));
 
-  #error specify your stream at kernel launch
-  kernel<<<gridsize, blocksize,0,0>>>(d_a, N);
+  kernel<<<gridsize, blocksize,0,stream>>>(d_a, N);
   HIP_ERRCHK(hipGetLastError());
 
-  #error replace hipMemcpy with its Async counterpart to copy data back to host using your stream
-  HIP_ERRCHK(hipMemcpy(a, d_a, N_bytes, hipMemcpyDeviceToHost));
+  HIP_ERRCHK(hipMemcpyAsync(a, d_a, N_bytes, hipMemcpyDeviceToHost, stream));
 
-  #error synchronize the host with your stream, before continuing
-
+	HIP_ERRCHK(hipStreamSynchronize(stream));
   // Print out 10 indexes in the array a
   for (int i = 0; i < 10; i++)
     printf("%f ", a[i]);
@@ -81,5 +76,5 @@ int main() {
   HIP_ERRCHK(hipFree(d_a));
   free(a);
 
-  #error destroy the stream
+  HIP_ERRCHK(hipStreamDestroy(stream));
 }

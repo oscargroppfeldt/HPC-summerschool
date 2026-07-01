@@ -73,8 +73,8 @@ void noRecurringAlloc(int nSteps, int size)
 
   int *d_A;
   // Allocate device memory
-  #error allocate memory with hipMalloc for d_A of size `bytes`
-
+  // allocate memory with hipMalloc for d_A of size `bytes`
+	HIP_ERRCHK(hipMalloc((void**)&d_A, bytes));
   // Start timer and begin stepping loop
   auto tStart = std::chrono::steady_clock::now();
   for(unsigned int i = 0; i < nSteps; i++)
@@ -83,15 +83,16 @@ void noRecurringAlloc(int nSteps, int size)
     hipKernel<<<gridsize, blocksize, 0, 0>>>(d_A, size);
   }
   // Synchronization
-  #error synchronize the default stream here before stopping the timer
-
+  // synchronize the default stream here before stopping the timer
+	HIP_ERRCHK(hipStreamSynchronize(0));
   // Check results and print timings
   auto tStop = std::chrono::steady_clock::now();
   float timing = std::chrono::duration<float, std::milli>(tStop - tStart).count();
   checkTiming("noRecurringAlloc", timing);
 
   // Free allocation
-  #error free d_A allocation using hipFree
+  // free d_A allocation using hipFree
+  HIP_ERRCHK(hipFree(d_A));
 }
 
 /* Do recurring allocation without memory pooling */
@@ -109,16 +110,19 @@ void recurringAllocNoMemPools(int nSteps, int size)
   {
     int *d_A;
     // Allocate device memory
-    #error allocate memory with hipMalloc for d_A of size `bytes`
+    // allocate memory with hipMalloc for d_A of size `bytes`
+	HIP_ERRCHK(hipMalloc((void**)&d_A, bytes));
     // Launch GPU kernel
     hipKernel<<<gridsize, blocksize, 0, 0>>>(d_A, size);
     HIP_ERRCHK(hipGetLastError());
     // Free allocation
-    #error free d_A allocation using hipFree
+    // free d_A allocation using hipFree
+	HIP_ERRCHK(hipFree(d_A));
   }
   // Synchronization
   // Ensure all queued allocations and kernels complete before stopping timing
-  #error synchronize the default stream here before stopping the timer
+  // synchronize the default stream here before stopping the timer
+  HIP_ERRCHK(hipStreamSynchronize(0));
 
   // Check results and print timings
   auto tStop = std::chrono::steady_clock::now();
@@ -145,15 +149,18 @@ void recurringAllocMallocAsync(int nSteps, int size)
   {
     int *d_A;
     // Allocate device memory
-    #error allocate memory with hipMallocAsync for d_A of size `bytes` in stream
+    // allocate memory with hipMallocAsync for d_A of size `bytes` in stream
+	HIP_ERRCHK(hipMallocAsync((void**)&d_A, bytes, stream));
     // Launch GPU kernel
     hipKernel<<<gridsize, blocksize, 0, stream>>>(d_A, size);
     HIP_ERRCHK(hipGetLastError());
     // Free allocation
-    #error free d_A allocation using hipFreeAsync in stream
+    // free d_A allocation using hipFreeAsync in stream
+	HIP_ERRCHK(hipFreeAsync(d_A, stream));
   }
   // Synchronization
-  #error synchronize stream here
+  // synchronize stream here
+  HIP_ERRCHK(hipStreamSynchronize(stream));
 
   // Check results and print timings
   auto tStop = std::chrono::steady_clock::now();

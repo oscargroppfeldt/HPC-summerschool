@@ -10,7 +10,8 @@
 #SBATCH --time=00:05:00
 
 # Enable OpenMP offload debugging on LUMI by uncommenting the line below
-#export CRAY_ACC_DEBUG=2
+module load LUMI/25.03 partition/G rocm/6.3.4
+export CRAY_ACC_DEBUG=2
 
 # Run the program
 srun ./hello.x

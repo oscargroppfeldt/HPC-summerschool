@@ -63,7 +63,7 @@ void warmupRun(int nSteps, int nx, int ny)
   {
     HIP_ERRCHK(hipMemset(d_A, 0, bytes));
     // Launch GPU kernel
-    #error Launch GPU kernel hipKernel
+    hipKernel<<<gridsize, BLOCKSIZE, 0, 0>>>(d_A, nx, ny);
   }
 
   // Synchronization
@@ -81,10 +81,10 @@ void explicitMemNoCopy(int nSteps, int nx, int ny)
   int *A, *d_A;
   size_t size = nx * ny * sizeof(int);
 
-  #error Allocate pageable host memory of size `size` for the pointer A
-
-  #error Allocate device memory (d_A)
-
+  //Allocate pageable host memory of size `size` for the pointer A
+	A = (int*)malloc(size);
+  //Allocate device memory (d_A)
+	HIP_ERRCHK(hipMalloc((void**)&d_A, size));
   // Start timer and begin stepping loop
   auto tStart = std::chrono::steady_clock::now();
   for(unsigned int i = 0; i < nSteps; i++)
@@ -95,23 +95,24 @@ void explicitMemNoCopy(int nSteps, int nx, int ny)
      * Initializing the array directly on the GPU and running a GPU kernel.
      */
 
-    #error Initialize array A to zeros on the device using hipMemset
-
+    //Initialize array A to zeros on the device using hipMemset
+	HIP_ERRCHK(hipMemset(d_A, 0, size));
     // Launch GPU kernel
     hipKernel<<<gridsize, BLOCKSIZE, 0, 0>>>(d_A, nx, ny);
     HIP_ERRCHK(hipGetLastError());
   }
 
-  #error Copy data back to host (d_A to A)
-
+  // Copy data back to host (d_A to A)
+	HIP_ERRCHK(hipMemcpy(A, d_A, size, hipMemcpyDeviceToHost));
   // Check results and print timings
   auto tStop = std::chrono::steady_clock::now();
   float timing = std::chrono::duration<float, std::milli>(tStop - tStart).count();
   checkResults(A, nx, ny, "ExplicitMemNoCopy", timing);
 
-  #error Free device array (d_A)
-
-  #error Free host array (A)
+  // Free device array (d_A)
+	HIP_ERRCHK(hipFree(d_A));
+  // Free host array (A)
+  free(A);	
 }
 
 /* Run using Unified Memory without recurring host/device memcopies */
@@ -123,8 +124,8 @@ void unifiedMemNoCopy(int nSteps, int nx, int ny)
   int *A;
   size_t size = nx * ny * sizeof(int);
 
-  #error Allocate Unified Memory of size `size` for the pointer A
-
+  // Allocate Unified Memory of size `size` for the pointer A
+	HIP_ERRCHK(hipMallocManaged((void**)&A, size));
   // Start timer and begin stepping loop
   auto tStart = std::chrono::steady_clock::now();
   for(unsigned int i = 0; i < nSteps; i++)
@@ -135,21 +136,23 @@ void unifiedMemNoCopy(int nSteps, int nx, int ny)
      * Initializing the array directly on the GPU and running a GPU kernel.
      */
 
-    #error Initialize array A to zeros on the device using hipMemset
-
+    // Initialize array A to zeros on the device using hipMemset
+	HIP_ERRCHK(hipMemset(A, 0, size));
     // Launch GPU kernel
-    #error Launch GPU kernel hipKernel
+    hipKernel<<<gridsize, BLOCKSIZE, 0, 0>>>(A, nx, ny);
+   //error Launch GPU kernel hipKernel
   }
-  #error Prefetch data (A) from device to host
-
-  #error Synchronization
-
+ //error Prefetch data (A) from device to host
+	HIP_ERRCHK(hipMemPrefetchAsync(A, size, hipCpuDeviceId));
+  // Synchronization
+	HIP_ERRCHK(hipStreamSynchronize(0));
   // Check results and print timings
   auto tStop = std::chrono::steady_clock::now();
   float timing = std::chrono::duration<float, std::milli>(tStop - tStart).count();
   checkResults(A, nx, ny, "UnifiedMemNoCopy", timing);
 
-  #error Free Unified Memory array (A)
+  // Free Unified Memory array (A)
+  HIP_ERRCHK(hipFree(A));
 }
 
 /* The main function */
