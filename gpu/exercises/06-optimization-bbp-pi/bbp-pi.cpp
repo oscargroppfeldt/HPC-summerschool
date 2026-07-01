@@ -37,8 +37,7 @@ __device__ float S(int j,int n) {
   float r = s+t;
   return s+t-(int)(s+t);
 }
-
-__global__ void hex_pi(float *a, int n)
+__global__ void hex_pi_ref(float *a, int n)
 {
   int tid = threadIdx.x + blockIdx.x * blockDim.x;
   int stride = gridDim.x * blockDim.x;
@@ -54,6 +53,7 @@ __global__ void hex_pi(float *a, int n)
     a[tid] = a[tid]*16;
   }
 }
+
 
 int main() {
   const size_t N = 1<<17;

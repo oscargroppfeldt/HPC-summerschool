@@ -42,6 +42,25 @@ __global__ void reduce_naive_blockatomic(const double* __restrict__ in,
                                          double* __restrict__ out,
                                          size_t N)
 {
+	size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
+	size_t stride = blockDim.x * gridDim.x;
+
+	double local_sum = 0.0;
+	for(size_t i = tid; i < N; i += stride){
+		local_sum += in[i];
+	}
+
+	__shared__ double scratch[1];
+	if(tid == 0) scratch[0] = 0.0;
+	__syncthreads();
+	
+	atomicAdd(scratch, local_sum);
+	__syncthreads();
+	
+	if(threadIdx.x == 0){
+		atomicAdd(out, scratch[0]);
+	}
+
 }
 
 // ==========================================================
@@ -52,7 +71,36 @@ __global__ void reduce_shared_atomic(const double* __restrict__ in,
                                      double* __restrict__ out,
                                      size_t N)
 {
+	extern __shared__ double smem[];
+	
+	unsigned tid = threadIdx.x;
+
+	size_t start = (size_t)blockIdx.x * blockDim.x + tid;
+	size_t stride = (size_t)blockDim.x * gridDim.x;
+
+	double local_sum = 0.0;
+	for(size_t i = start; i < N; i += stride){
+		double a = in[i];
+		double b = (i + blockDim.x < N) ? in[i + blockDim.x] : 0.0;
+		local_sum += a + b;
+	}
+		
+	
+	smem[tid] = local_sum;
+	__syncthreads();
+	
+	for(size_t s = blockDim.x / 2; s > 0; s >>=1){
+		if(tid < s)
+			smem[tid] += smem[tid + s];
+		__syncthreads();
+	}
+
+	if(tid == 0){
+		atomicAdd(out, smem[0]);
+	}
+
 }
+
 
 
 // ============================

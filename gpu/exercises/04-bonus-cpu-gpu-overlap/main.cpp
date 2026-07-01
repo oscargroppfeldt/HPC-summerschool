@@ -119,7 +119,6 @@ void dontOverlapCpuGpuWork(float *A, float *d_A, int n,
                            int gridsize, int blocksize,
                            hipStream_t stream)
 {
-  #error TODO in this function: synchronize stream immediately after gpu kernel launch, before CPU work has started
 
   roctxRangePush("1. Don't overlap");
 
@@ -128,6 +127,7 @@ void dontOverlapCpuGpuWork(float *A, float *d_A, int n,
   // Launch kernel
   roctxRangePush("launch GPU");
   gpu_kernel<<<gridsize, blocksize, 0, stream>>>(d_A, n);
+  HIP_ERRCHK(hipStreamSynchronize(stream));
   HIP_ERRCHK(hipGetLastError());
   roctxRangePop();
 
@@ -161,7 +161,6 @@ void overlapCpuGpuWork(float *A, float *d_A, int n,
                        int gridsize, int blocksize,
                        hipStream_t stream)
 {
-  #error TODO in this function: synchronize stream after CPU work has started
 
   roctxRangePush("2. Overlap work");
 
@@ -177,7 +176,7 @@ void overlapCpuGpuWork(float *A, float *d_A, int n,
   roctxRangePush("CPU executing");
   double cpu_result = compute_on_cpu(CPU_WORK_SIZE);
   roctxRangePop();
-
+  HIP_ERRCHK(hipStreamSynchronize(stream));
   // Synchronize only here, when the GPU result is needed.
   roctxRangePush("CPU waiting");
   roctxRangePop();
