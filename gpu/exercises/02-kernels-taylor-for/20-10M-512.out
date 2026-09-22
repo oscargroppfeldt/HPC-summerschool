@@ -1,0 +1,2 @@
+Taylor N, vector size, number of threads, base[us], strided[us], consecutive[us]
+20, 10000000, 512, 445, 511, 2185
